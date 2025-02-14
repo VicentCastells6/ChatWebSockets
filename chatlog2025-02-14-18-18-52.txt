@@ -1,5 +1,7 @@
 Usuario1 se ha conectado.
 Usuario2 se ha conectado.
 Usuario3 se ha conectado.
-Usuario3 se ha desconectado.
+Usuario2: asdas
+Usuario1: 54345
 Usuario2 se ha desconectado.
+Usuario1 se ha desconectado.

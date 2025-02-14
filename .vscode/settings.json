@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "ChatWebSockets.sln"
+    "dotnet.defaultSolution": "Chat_Websockets.sln"
 }

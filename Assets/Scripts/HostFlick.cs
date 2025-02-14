@@ -7,6 +7,8 @@ public class HostFlick : MonoBehaviour
     public float blinkInterval = 0.5f; // Intervalo de parpadeo en segundos
 
     private float timer;
+
+    // Con el color manejo la opacidad
     private Color originalColor;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -17,18 +19,18 @@ public class HostFlick : MonoBehaviour
             Debug.LogError("No se ha asignado ninguna imagen para parpadear.");
             return;
         }
-
-        originalColor = imageToBlink.color; // Guardar el color original de la imagen
+        // Guardar el color original de la imagen
+        originalColor = imageToBlink.color; 
     }
 
-    // Update is called once per frame
+
     void Update()
     {
         if (imageToBlink != null)
         {
             timer += Time.deltaTime;
-            float alpha = Mathf.PingPong(timer / blinkInterval, 1.0f); // Calcular la opacidad usando PingPong
-            imageToBlink.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha); // Aplicar la opacidad
+            float opacity = Mathf.PingPong(timer / blinkInterval, 1.0f); // calculo de alternancia de la opacidad, para que parpapee  
+            imageToBlink.color = new Color(originalColor.r, originalColor.g, originalColor.b, opacity); // Aplicalo
         }
     }
 }

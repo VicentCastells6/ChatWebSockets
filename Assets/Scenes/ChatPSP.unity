@@ -202,7 +202,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 163739914}
   m_Direction: 0
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99999994
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -542,6 +542,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputField: {fileID: 520664972}
   chatHistory: {fileID: 1289102679}
+  conectadosText: {fileID: 1813846544}
   scrollRect: {fileID: 374804136}
   sendButton: {fileID: 1106907106}
 --- !u!4 &453612571
@@ -2237,7 +2238,7 @@ GameObject:
   - component: {fileID: 1813846545}
   - component: {fileID: 1813846544}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Contador
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2358,7 +2359,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 785, y: 464}
+  m_AnchoredPosition: {x: 651, y: 464}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1939299749
@@ -2500,7 +2501,7 @@ GameObject:
   - component: {fileID: 2066705547}
   - component: {fileID: 2066705549}
   m_Layer: 5
-  m_Name: RawImage
+  m_Name: HostIndicator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

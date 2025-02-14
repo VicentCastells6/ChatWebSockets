@@ -9,12 +9,17 @@ using System.IO;
 public class BasicWebSocketServer : MonoBehaviour
 {
     private WebSocketServer wss;
-    private List<string> colors = new List<string> { "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF" };
+    private List<string> colors = new List<string> 
+    { 
+        "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF",
+        "#800000", "#808000", "#008000", "#800080", "#008080", "#000080",
+        "#FFA500", "#A52A2A", "#8A2BE2", "#5F9EA0", "#D2691E", "#FF7F50"
+    };
     private static List<string> historialMensajes = new List<string>();
     private static bool hostExists = false; // Variable estática para rastrear si ya existe un host
     private bool isHost = false; // Variable para indicar si esta instancia es el host
 
-    private static int conectados = 0;
+    public static  int conectados = 0;
 
     public RawImage rawImage;
     public TMPro.TMP_Text conectadosText; // Agrega una referencia al TMP_Text
@@ -60,6 +65,7 @@ public class BasicWebSocketServer : MonoBehaviour
             // Guardar el historial de mensajes en un archivo de texto cuando se cierre el servidor
             string fechaActual = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
             File.WriteAllLines("chatlog" + fechaActual + ".txt", historialMensajes);
+            wss.WebSocketServices["/"].Sessions.Broadcast("El servidor se ha cerrado.");
             wss.Stop();
             wss = null;
             hostExists = false; // Restablecer la variable estática cuando el host se destruye
@@ -67,10 +73,11 @@ public class BasicWebSocketServer : MonoBehaviour
         }
     }
 
-    private void UpdateConectadosText()
+    public void UpdateConectadosText()
     {
         if (conectadosText != null)
         {
+            Debug.Log("Actualizando texto de conectados.");
             conectadosText.text = "Conectados: " + conectados.ToString();
         }
     }
@@ -88,23 +95,24 @@ public class BasicWebSocketServer : MonoBehaviour
     }
 
     private static void UpdateConectadosTextStatic()
-{
-    var instances = FindObjectsOfType<BasicWebSocketServer>();
-    foreach (var instance in instances)
     {
-        Debug.Log("Instancia: " + instance);
-        if (instance != null)
+        var instances = FindObjectsOfType<BasicWebSocketServer>();
+        foreach (var instance in instances)
         {
-            instance.UpdateConectadosText();
+            Debug.Log("Instancia: " + instance);
+            if (instance != null)
+            {
+                instance.UpdateConectadosText();
+            }
         }
     }
-}
 
     public class ChatBehavior : WebSocketBehavior
     {
         private string userId;
         private string userColor;
         private static List<string> colors;
+        private static System.Random random = new System.Random();
 
         // Método para asignar colores desde el servidor
         public static void SetColors(List<string> colorList)
@@ -114,11 +122,12 @@ public class BasicWebSocketServer : MonoBehaviour
 
         protected override void OnOpen()
         {
+            BasicWebSocketServer.IncrementConectados();
             // Asignar nombre e id en funcion al numero de sesiones y colores disponibles
             userId = "Usuario" + Sessions.Count;
             if (colors != null && colors.Count > 0)
             {
-                userColor = colors[Sessions.Count % colors.Count];
+                userColor = colors[random.Next(colors.Count)];
             }
             else
             {
@@ -129,30 +138,46 @@ public class BasicWebSocketServer : MonoBehaviour
             string messageFormated = $"{userId} se ha conectado.";
             historialMensajes.Add(messageFormated);
             Sessions.Broadcast($"<color={userColor}>{userId}</color> se ha conectado.");
-            BasicWebSocketServer.IncrementConectados();
-            UpdateConectadosTextStatic();
+            // Incrementar el contador de conectados
+
+            Sessions.Broadcast("$$Conectados: " + BasicWebSocketServer.conectados.ToString());
+            
         }
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            //Mensaje del chat
-            string message = $"<color={userColor}>{userId}</color>: {e.Data}";
-            // Mensaje para el chatlog
-            string messageFormated = $"{userId}: {e.Data}";
-            Debug.Log($"Mensaje recibido: {message}");
-            Sessions.Broadcast(message);
-            historialMensajes.Add(messageFormated);
+            try {
+                if (!BasicWebSocketServer.hostExists)
+                {
+                    Sessions.Broadcast("El servidor no está disponible.");
+                    return;
+                }
+                else{
+                    //Mensaje del chat
+                    string message = $"<color={userColor}>{userId}</color>: {e.Data}";
+                    // Mensaje para el chatlog
+                    string messageFormated = $"{userId}: {e.Data}";
+                    Debug.Log($"Mensaje recibido: {message}");
+                    Sessions.Broadcast(message);
+                    historialMensajes.Add(messageFormated);
+                }
+            } catch (Exception ex) {
+                Debug.LogError("Error al enviar mensaje: " + ex.Message);
+            }
+            
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
+            BasicWebSocketServer.DecrementConectados();
             Debug.Log($"Usuario {userId} desconectado.");
             string message = $"<color={userColor}>{userId}</color> se ha desconectado.";
             string messageFormated = $"{userId} se ha desconectado.";
             Sessions.Broadcast(message);
             historialMensajes.Add(messageFormated);
-            BasicWebSocketServer.DecrementConectados();
-            UpdateConectadosTextStatic();
+            
+            Sessions.Broadcast("$$Conectados: " + BasicWebSocketServer.conectados.ToString());
+
         }
     }
 }

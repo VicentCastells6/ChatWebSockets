@@ -10,6 +10,9 @@ public class BasicWebSocketClient : MonoBehaviour
     private WebSocket ws;
     public TMP_InputField inputField;
     public TMP_Text chatHistory;
+
+    public TMP_Text conectadosText; // Agrega una referencia al TMP_Text
+
     public ScrollRect scrollRect;
     public Button sendButton; // Agrega una referencia al botón de enviar
 
@@ -49,8 +52,18 @@ public class BasicWebSocketClient : MonoBehaviour
             // Metodo que se encarga de recibir los mensajes del servidor.
             ws.OnMessage += (sender, e) =>
             {
-                // Almacenar el mensaje recibido en la lista
+                if (e.Data.Contains("$$Conectados:"))
+                {
+                    string[] parts = e.Data.Split(':');
+                    int conectados = int.Parse(parts[1]);
+                    conectadosText.text = "Conectados: " + conectados;
+                }
+                else
+                {
                 receivedMessages.Add(e.Data);
+
+                }
+                // Almacenar el mensaje recibido en la lista
             };
 
             ws.OnError += (sender, e) =>
