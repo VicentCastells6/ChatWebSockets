@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 using System.Collections.Generic;
@@ -9,41 +10,76 @@ public class BasicWebSocketServer : MonoBehaviour
 {
     private WebSocketServer wss;
     private List<string> colors = new List<string> { "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF" };
-
     private static List<string> historialMensajes = new List<string>();
+    private static bool hostExists = false; // Variable estática para rastrear si ya existe un host
+    private bool isHost = false; // Variable para indicar si esta instancia es el host
+
+
+    public RawImage rawImage;
+    public static TMPro.TMP_Text conectadosText; // Agrega una referencia al TMP_Text
 
     void Start()
     {
-        wss = new WebSocketServer(7777);
-        // Asignar colores a los usuarios conectados
-        ChatBehavior.SetColors(colors);
-        // Agregar el comportamiento del chat al servidor
-        wss.AddWebSocketService<ChatBehavior>("/");
-        wss.Start();
-        Debug.Log("Servidor WebSocket iniciado en ws://127.0.0.1:7777/");
+        if (!hostExists)
+        {
+            isHost = true;
+            hostExists = true;
+            Debug.Log("Esta instancia es el host.");
+            try
+            {
+                wss = new WebSocketServer(7777);
+                // Asignar colores a los usuarios conectados
+                ChatBehavior.SetColors(colors);
+                // Agregar el comportamiento del chat al servidor
+                wss.AddWebSocketService<ChatBehavior>("/");
+                wss.Start();
+                rawImage.enabled = true;
+                
+                Debug.Log("Servidor WebSocket iniciado en ws://127.0.0.1:7777/");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("Error al iniciar el servidor WebSocket: " + ex.Message);
+                isHost = false;
+                hostExists = false;
+                rawImage.enabled = false;
+            }
+        }
+        else
+        {
+            rawImage.enabled = false;
+            Debug.Log("Esta instancia no es el host.");
+        }
     }
 
     void OnDestroy()
     {
-        if (wss != null)
+        if (isHost && wss != null)
         {
             // Guardar el historial de mensajes en un archivo de texto cuando se cierre el servidor
             string fechaActual = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
-            File.WriteAllLines("chatlog" + fechaActual + ".txt", historialMensajes);
+            File.WriteAllLines("/Logs/chatlog" + fechaActual + ".txt", historialMensajes);
             wss.Stop();
             wss = null;
+            hostExists = false; // Restablecer la variable estática cuando el host se destruye
             Debug.Log("Servidor WebSocket detenido.");
         }
+        
     }
+
 
     public class ChatBehavior : WebSocketBehavior
     {
         private string userId;
         private string userColor;
-        private static List<string> colors; 
+        private static List<string> colors;
+
+
+        private static int conectados = 0;
+
 
         // Método para asignar colores desde el servidor
-        public static void SetColors(List<string> colorList) 
+        public static void SetColors(List<string> colorList)
         {
             colors = colorList;
         }
@@ -52,6 +88,8 @@ public class BasicWebSocketServer : MonoBehaviour
         {
             // Asignar nombre e id en funcion al numero de sesiones y colores disponibles
             userId = "Usuario" + Sessions.Count;
+            conectados++;
+            UpdateConectadosText();
             if (colors != null && colors.Count > 0)
             {
                 userColor = colors[Sessions.Count % colors.Count];
@@ -61,8 +99,11 @@ public class BasicWebSocketServer : MonoBehaviour
                 userColor = "#FFFFFF"; // Color blanco por defecto si la lista está vacía
             }
 
-            Debug.Log($"Usuario <color={userColor}>{userId}</color> conectado con color {userColor}.");
+            Debug.Log($" <color={userColor}>{userId}</color> conectado con color {userColor}.");
+            string messageFormated = $"{userId} se ha conectado.";
+            historialMensajes.Add(messageFormated);
             Sessions.Broadcast($"<color={userColor}>{userId}</color> se ha conectado.");
+            
         }
 
         protected override void OnMessage(MessageEventArgs e)
@@ -78,8 +119,22 @@ public class BasicWebSocketServer : MonoBehaviour
 
         protected override void OnClose(CloseEventArgs e)
         {
+            conectados--;
+            UpdateConectadosText();
             Debug.Log($"Usuario {userId} desconectado.");
-            Sessions.Broadcast($"{userId} se ha desconectado.");
+            string message = $"<color={userColor}>{userId}</color> se ha desconectado.";
+            string messageFormated = $"{userId} se ha desconectado.";
+            Sessions.Broadcast(message);
+            historialMensajes.Add(messageFormated);
+            
         }
+
+        public static void UpdateConectadosText()
+    {
+        if (conectadosText != null)
+        {
+            conectadosText.text = "Conectados: " + conectados.ToString();
+        }
+    }
     }
 }

@@ -11,20 +11,32 @@ public class BasicWebSocketClient : MonoBehaviour
     public TMP_InputField inputField;
     public TMP_Text chatHistory;
     public ScrollRect scrollRect;
+    public Button sendButton; // Agrega una referencia al botón de enviar
 
     // Lista para almacenar los mensajes recibidos
     private List<string> receivedMessages = new List<string>();
-
 
     void Start()
     {
         chatHistory.text = "";
         StartCoroutine(ConnectToServer());
+
+        inputField.onEndEdit.AddListener(HandleEnterKey);
     }
+
+    // Método que permite que si le das al enter o al intro del teclado se envíe el mensaje.
+    private void HandleEnterKey(string text)
+    {
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            SendMessageToServer();
+        }
+    }
+
     // Metodo que se encarga de conectarse al servidor para que no se solape.
     IEnumerator ConnectToServer()
     {
-        //Comprobacion de que el server está encendido
+        // Comprobacion de que el server está encendido
         while (ws == null || ws.ReadyState != WebSocketState.Open)
         {
             ws = new WebSocket("ws://127.0.0.1:7777/");
@@ -33,12 +45,14 @@ public class BasicWebSocketClient : MonoBehaviour
             {
                 Debug.Log("WebSocket conectado correctamente.");
             };
+
             // Metodo que se encarga de recibir los mensajes del servidor.
             ws.OnMessage += (sender, e) =>
             {
                 // Almacenar el mensaje recibido en la lista
                 receivedMessages.Add(e.Data);
             };
+
             ws.OnError += (sender, e) =>
             {
                 Debug.LogError("Error en el WebSocket: " + e.Message);
@@ -48,6 +62,7 @@ public class BasicWebSocketClient : MonoBehaviour
             {
                 Debug.Log("WebSocket cerrado. Código: " + e.Code + ", Razón: " + e.Reason);
             };
+
             // Conectar al servidor
             ws.ConnectAsync();
 
@@ -73,7 +88,8 @@ public class BasicWebSocketClient : MonoBehaviour
             scrollRect.verticalNormalizedPosition = 0f;
         }
     }
-    //Metodo que se encarga de enviar el mensaje al servidor.
+
+    // Metodo que se encarga de enviar el mensaje al servidor.
     public void SendMessageToServer()
     {
         if (inputField == null)
